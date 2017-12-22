@@ -97,9 +97,9 @@ def img_reader(batch_df,
         if subtract == "imagenet":
             # means of imagenet brg[0.407, 0.458, 0.485]
             means = [0.407, 0.458, 0.485]
-            img[:, :, 0] = means[0]
-            img[:, :, 1] = means[1]
-            img[:, :, 2] = means[2]
+            img[:, :, 0] -= means[0]
+            img[:, :, 1] -= means[1]
+            img[:, :, 2] -= means[2]
         if mode == "rgb":
             img = img[:, :, ::-1]
         if direction == 'chw':
@@ -114,16 +114,19 @@ def generate_labels(dataset_dir):
     dirs = [d for d in os.listdir(dataset_dir) if os.path.isdir(os.path.join(dataset_dir, d))]
     dirs.sort()
     img_paths, labels = [], []
+    label_dict = []
     for _label, _dir in enumerate(dirs):
+        label_dict.append([_dir, _label])
         files = glob.glob(os.path.join(dataset_dir, _dir, '*.jpg'))
         img_paths.append(files)
         labels.append([_label]*len(files))
+
     img_paths, labels = np.concatenate(img_paths), np.concatenate(labels)
     records = pd.DataFrame()
     records["paths"] = img_paths
     records["labels"] = labels
     records.to_csv(dataset_dir+"-records.csv", index=False)
-    return 0
+    return label_dict
 
 
 def load_dataset(datadir):
@@ -151,12 +154,15 @@ if __name__ == '__main__':
     #
     #     separate_train_val(args)
 
-    # save records images in training and validation datasets
-    for datadir in ["amazon", "dslr", "webcam"]:
-        for sets in ["ori", "train", "val"]:
-            dataset_dir = 'dataset/office31/{}/{}'.format(datadir, sets)
-            generate_labels(dataset_dir)
-
+    # # save records images in training and validation datasets
+    # label_dicts=[]
+    # for datadir in ["amazon", "dslr", "webcam"]:
+    #     for sets in ["ori", "train", "val"]:
+    #         dataset_dir = 'dataset/office31/{}/{}'.format(datadir, sets)
+    #         label_dicts.append(generate_labels(dataset_dir))
+    # label_dicts = [np.array(i) for i in label_dicts]
+    # for _dict in label_dicts[1:]:
+    #     assert np.sum(label_dicts[0]==_dict) == label_dicts[0].shape[0]*label_dicts[0].shape[1]
     # df = load_dataset('dataset/office31/amazon/train')
     #
     # batch_size = 32
