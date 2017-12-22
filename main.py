@@ -178,7 +178,7 @@ def coral_func(src, tar):
 if __name__ == '__main__':
     # building model for training
     model = Alex()
-    used_pretrain = True
+    used_pretrain = False
     nb_cls = 31
     if used_pretrain:
         # load pretrain weights
@@ -253,7 +253,5 @@ if __name__ == '__main__':
         coral_st /= train_steps
         acc_s /= train_steps
         acc_t /= train_steps
-        print("Epoch:{:02d}, src-Loss:{:0.2f}, tar-Loss:{:0.2f}".
-              format(epoch, float(cls_s), float(cls_t)))
-        print("Epoch:{:02d}, src-Acc:{:0.2f}, tar-Acc:{:0.2f}".
-              format(epoch, float(acc_s), float(acc_t)))
+        print("Epoch:{:02d}, src-Loss:{:0.2f}, tar-Loss:{:0.2f}, src-Acc:{:0.2f}, tar-Acc:{:0.2f}".
+              format(epoch, float(cls_s), float(cls_t), float(acc_s), float(acc_t)))
