@@ -176,20 +176,22 @@ def coral_func(src, tar):
 
 
 if __name__ == '__main__':
+    # building model for training
     model = Alex()
-    used_pretrain = False
+    used_pretrain = True
     nb_cls = 31
     if used_pretrain:
         # load pretrain weights
         npz.load_npz("alexnet.npz", model)
         # replace final fc layer
+
+    initializer = chainer.initializers.Normal(0.005)
+    model.fc8 = L.Linear(None, nb_cls, initialW=initializer)
+
     if chainer.cuda.available:
         model.to_gpu()
     # change fc8 layer to output 31 class
     xp = model.xp
-    model.fc8 = L.Linear(None, nb_cls)
-    model.fc8.W.data = xp.random.normal(0, 0.005, size=(nb_cls, 4096))
-
     batch_sizes = [32, 32]
 
     source_train = load_dataset("dataset/office31/amazon/train")
