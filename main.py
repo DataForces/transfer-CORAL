@@ -185,7 +185,8 @@ if __name__ == '__main__':
         # replace final fc layer
 
     model.fc8 = L.Linear(None, nb_cls)
-#    model.to_gpu()
+    if chainer.cuda.available:
+        model.to_gpu()
     xp = model.xp
     batch_sizes = [32, 32]
 

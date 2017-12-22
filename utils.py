@@ -151,19 +151,19 @@ if __name__ == '__main__':
     #
     #     separate_train_val(args)
 
-    # # save records images in training and validation datasets
-    # for datadir in ["amazon", "dslr", "webcam"]:
-    #     for sets in ["ori", "train", "val"]:
-    #         dataset_dir = 'dataset/office31/{}/{}'.format(datadir, sets)
-    #         generate_labels(dataset_dir)
+    # save records images in training and validation datasets
+    for datadir in ["amazon", "dslr", "webcam"]:
+        for sets in ["ori", "train", "val"]:
+            dataset_dir = 'dataset/office31/{}/{}'.format(datadir, sets)
+            generate_labels(dataset_dir)
 
-    df = load_dataset('dataset/office31/amazon/train')
-
-    batch_size = 32
-    train_steps = 10
-    epochs = 1
-    for epoch in range(epochs):
-        rec_idx = random.shuffle(list(range(0, df.shape[0])))
-        for i in range(train_steps):
-            iter_df = df.iloc[i*batch_size:(i+1)*batch_size]
-            iter_x, iter_y = img_reader(iter_df)
+    # df = load_dataset('dataset/office31/amazon/train')
+    #
+    # batch_size = 32
+    # train_steps = 10
+    # epochs = 1
+    # for epoch in range(epochs):
+    #     rec_idx = random.shuffle(list(range(0, df.shape[0])))
+    #     for i in range(train_steps):
+    #         iter_df = df.iloc[i*batch_size:(i+1)*batch_size]
+    #         iter_x, iter_y = img_reader(iter_df)
