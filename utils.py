@@ -107,7 +107,7 @@ def img_reader(batch_df,
             img = img.transpose((2, 0, 1))
         x.append(np.expand_dims(img, axis=0))
         y.append(record["labels"])
-    return np.concatenate(x), y
+    return np.concatenate(x), np.array(y)
 
 
 def array_to_img(img_array):

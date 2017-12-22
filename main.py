@@ -175,7 +175,8 @@ def coral_func(src, tar):
     return coral
 
 
-if __name__ == '__main__':
+def batch_train():
+
     # building model for training
     model = Alex()
     used_pretrain = False
@@ -227,6 +228,7 @@ if __name__ == '__main__':
             target_label = Variable(xp.array(iter_tar_y))
             fc8_t = model(target_data)
             fc8_s = model(source_data)
+            model.cleargrads()
             cls_loss_s = F.softmax_cross_entropy(fc8_s, source_label)
             cls_loss_t = F.softmax_cross_entropy(fc8_t, target_label)
             cls_acc_s = F.accuracy(fc8_s, source_label)
@@ -239,7 +241,7 @@ if __name__ == '__main__':
             # Setup an optimizer
             optimizer = chainer.optimizers.Adam()
             optimizer.setup(model)
-            model.cleargrads()
+
             loss.backward()
             optimizer.update()
             cls_s += cls_loss_s.data
@@ -258,3 +260,81 @@ if __name__ == '__main__':
         acc_t /= train_steps
         print("Epoch:{:02d}, Iter:{:03d}, src-Loss:{:0.2f}, tar-Loss:{:0.2f}, src-Acc:{:0.2f}, tar-Acc:{:0.2f}".
               format(epoch, iter_nb, float(cls_s), float(cls_t), float(acc_s), float(acc_t)))
+
+
+if __name__ == '__main__':
+    gpu = -1
+    batch_size = 32
+    epochs = 20
+    print('GPU: {}'.format(gpu))
+    print('# Minibatch-size: {}'.format(batch_size))
+    print('# epoch: {}'.format(20))
+    print('')
+
+    alexnet = Alex()
+    used_pretrain = False
+    nb_cls = 31
+    if used_pretrain:
+        # load pretrain weights
+        npz.load_npz("alexnet.npz", alexnet)
+
+    # change fc8 layer to output 31 class
+    initializer = chainer.initializers.Normal(0.005)
+    alexnet.fc8 = L.Linear(None, nb_cls, initialW=initializer)
+    model = L.Classifier(alexnet)
+    if chainer.cuda.available:
+        model.to_gpu()
+
+    # Setup an optimizer
+    optimizer = chainer.optimizers.Adam()
+    optimizer.setup(model)
+
+    source_train = load_dataset("dataset/office31/amazon/train")
+    source_val = load_dataset("dataset/office31/amazon/val")
+    target_train = load_dataset("dataset/office31/webcam/train")
+    target_val = load_dataset("dataset/office31/webcam/val")
+    src_train_x, src_train_y = img_reader(source_train)
+    src_val_x, src_val_y = img_reader(source_val)
+    train_data = chainer.datasets.TupleDataset(src_train_x, src_train_y)
+    val_data = chainer.datasets.TupleDataset(src_val_x, src_val_y)
+
+    train_iter = chainer.iterators.SerialIterator(train_data, batch_size, shuffle=True)
+    test_iter = chainer.iterators.SerialIterator(val_data, batch_size, repeat=False, shuffle=False)
+    # Set up a trainer
+    updater = training.StandardUpdater(train_iter, optimizer, device=gpu)
+    trainer = training.Trainer(updater, (epochs, 'epoch'), out='result')
+
+    # Evaluate the model with the test dataset for each epoch
+    trainer.extend(extensions.Evaluator(test_iter, model, device=gpu))
+
+    # Dump a computational graph from 'loss' variable at the first iteration
+    # The "main" refers to the target link of the "main" optimizer.
+    trainer.extend(extensions.dump_graph('main/loss'))
+
+    # Write a log of evaluation statistics for each epoch
+    trainer.extend(extensions.LogReport())
+
+    # Save two plot images to the result dir
+    if extensions.PlotReport.available():
+        trainer.extend(
+            extensions.PlotReport(['main/loss', 'validation/main/loss'],
+                                  'epoch', file_name='loss.png'))
+        trainer.extend(
+            extensions.PlotReport(
+                ['main/accuracy', 'validation/main/accuracy'],
+                'epoch', file_name='accuracy.png'))
+
+    # Print selected entries of the log to stdout
+    # Here "main" refers to the target link of the "main" optimizer again, and
+    # "validation" refers to the default name of the Evaluator extension.
+    # Entries other than 'epoch' are reported by the Classifier link, called by
+    # either the updater or the evaluator.
+    trainer.extend(extensions.PrintReport(
+        ['epoch', 'main/loss', 'validation/main/loss',
+         'main/accuracy', 'validation/main/accuracy', 'elapsed_time']))
+
+    # Print a progress bar to stdout
+    trainer.extend(extensions.ProgressBar())
+
+    # Run the training
+    trainer.run()
