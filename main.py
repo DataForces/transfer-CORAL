@@ -199,11 +199,13 @@ if __name__ == '__main__':
     target_train = load_dataset("dataset/office31/webcam/train")
     target_val = load_dataset("dataset/office31/webcam/val")
 
-    train_steps = min(source_train.shape[0]//batch_sizes[0],
-                      target_train.shape[0]//batch_sizes[1])
+#    train_steps = min(source_train.shape[0]//batch_sizes[0],
+#                      target_train.shape[0]//batch_sizes[1])
+    train_steps = 1
     alpha = 0.0
     nb_epochs = 50
     has_coral = False
+    iter_nb = 0
     for epoch in range(nb_epochs):
         cls_s, cls_t, coral_st = 0, 0, 0
         acc_s, acc_t = 0, 0
@@ -248,10 +250,11 @@ if __name__ == '__main__':
                 coral_st += 0
             acc_s += cls_acc_s.data
             acc_t += cls_acc_t.data
+            iter_nb += 1
         cls_s /= train_steps
         cls_t /= train_steps
         coral_st /= train_steps
         acc_s /= train_steps
         acc_t /= train_steps
-        print("Epoch:{:02d}, src-Loss:{:0.2f}, tar-Loss:{:0.2f}, src-Acc:{:0.2f}, tar-Acc:{:0.2f}".
-              format(epoch, float(cls_s), float(cls_t), float(acc_s), float(acc_t)))
+        print("Epoch:{:02d}, Iter:{:03d}, src-Loss:{:0.2f}, tar-Loss:{:0.2f}, src-Acc:{:0.2f}, tar-Acc:{:0.2f}".
+              format(epoch, iter_nb, float(cls_s), float(cls_t), float(acc_s), float(acc_t)))
