@@ -51,7 +51,7 @@ class Alex(chainer.Chain):
         h = F.max_pooling_2d(F.relu(self.conv5(h)), 3, stride=2)
         h = F.dropout(F.relu(self.fc6(h)))
         h = F.dropout(F.relu(self.fc7(h)))
-        h = F.softmax(self.fc8(h))
+        h = self.fc8(h)
         return h
 
 
@@ -183,11 +183,13 @@ if __name__ == '__main__':
         # load pretrain weights
         npz.load_npz("alexnet.npz", model)
         # replace final fc layer
-
-    model.fc8 = L.Linear(None, nb_cls)
     if chainer.cuda.available:
         model.to_gpu()
+    # change fc8 layer to output 31 class
     xp = model.xp
+    model.fc8 = L.Linear(None, nb_cls)
+    model.fc8.W.data = xp.random.normal(0, 0.005, size=(nb_cls, 4096))
+
     batch_sizes = [32, 32]
 
     source_train = load_dataset("dataset/office31/amazon/train")
@@ -203,8 +205,13 @@ if __name__ == '__main__':
     for epoch in range(nb_epochs):
         cls_s, cls_t, coral_st = 0, 0, 0
         acc_s, acc_t = 0, 0
-        src_train_idx = random.shuffle(list(range(0, source_train.shape[0])))
-        tar_train_idx = random.shuffle(list(range(0, target_train.shape[0])))
+        # shuffle data of source and target every epoch
+        src_train_idx = list(range(0, source_train.shape[0]))
+        random.shuffle(src_train_idx)
+        source_train = source_train.iloc[src_train_idx]
+        tar_train_idx = list(range(0, target_train.shape[0]))
+        random.shuffle(tar_train_idx)
+        target_train = target_train.iloc[tar_train_idx]
         for i in range(train_steps):
             iter_src_df = source_train.iloc[i * batch_sizes[0]:(i+1) * batch_sizes[0]]
             iter_tar_df = target_train.iloc[i * batch_sizes[1]:(i+1) * batch_sizes[1]]
@@ -226,7 +233,7 @@ if __name__ == '__main__':
             else:
                 loss = cls_loss_s
             # Setup an optimizer
-            optimizer = chainer.optimizers.Adam(alpha=0.01)
+            optimizer = chainer.optimizers.Adam()
             optimizer.setup(model)
             model.cleargrads()
             loss.backward()

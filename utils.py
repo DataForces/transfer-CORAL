@@ -22,6 +22,7 @@ import numpy as np
 import pandas as pd
 import cv2
 from chainer import Variable
+import matplotlib.pyplot as plt
 
 
 
@@ -109,6 +110,16 @@ def img_reader(batch_df,
     return np.concatenate(x), y
 
 
+def array_to_img(img_array):
+    """
+    """
+    img = img_array.transpose((1, 2, 0))
+    means = [0.407, 0.458, 0.485]
+    img[:, :, 0] += means[0]
+    img[:, :, 1] += means[1]
+    img[:, :, 2] += means[2]
+    return img
+
 def generate_labels(dataset_dir):
     # generate label for training and validation images
     dirs = [d for d in os.listdir(dataset_dir) if os.path.isdir(os.path.join(dataset_dir, d))]
@@ -173,3 +184,4 @@ if __name__ == '__main__':
     #     for i in range(train_steps):
     #         iter_df = df.iloc[i*batch_size:(i+1)*batch_size]
     #         iter_x, iter_y = img_reader(iter_df)
+    print("Ending...")
