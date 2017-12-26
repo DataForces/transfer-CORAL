@@ -153,7 +153,7 @@ def main():
     trainer.run()
 
 
-def coral_func(src, tar):
+def coral_func(xp, src, tar):
     """
     inputs:
         -src(Variable) : features extracted from source data
@@ -164,7 +164,7 @@ def coral_func(src, tar):
     """
     ns, nt = src.data.shape[0], tar.data.shape[0]
     dim = src.data.shape[1]
-    xp = model.xp
+
     ones_s = xp.ones((1, ns), dtype=np.float32)
     ones_t = xp.ones((1, nt), dtype=np.float32)
     tmp_s = F.matmul(Variable(ones_s), src)
@@ -242,7 +242,7 @@ def batch_train():
                 cls_acc_s = F.accuracy(fc8_s, source_label)
                 cls_acc_t = F.accuracy(fc8_t, target_label)
                 if has_coral:
-                    coral_loss = coral_func(fc8_s, fc8_t)
+                    coral_loss = coral_func(xp, fc8_s, fc8_t)
                     loss = cls_loss_s + coral_loss*alpha
                 else:
                     loss = cls_loss_s
