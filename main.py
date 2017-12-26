@@ -71,7 +71,7 @@ class Classifier(chainer.Chain):
             self.sharedNet = sharedNet
             self.alpha = alpha
             self.has_coral = has_coral
-            
+
     def __call__(self, src_x, src_y, tar_x, tar_y):
         features_s = self.sharedNet(src_x)
         features_t = self.sharedNet(tar_x)
@@ -315,8 +315,7 @@ def batch_train():
     return results
 
 
-def coral_train():
-    gpu = -1
+def coral_train(gpu):
     batch_size = 32
     epochs = 100
     print('GPU: {}'.format(gpu))
@@ -355,11 +354,11 @@ def coral_train():
     tar_train_idx = list(range(0, target_train.shape[0]))
     random.shuffle(tar_train_idx)
     target_train = target_train.iloc[tar_train_idx]
-    
+
     nb_train = min(source_train.shape[0], target_train.shape[0])
     src_train_x, src_train_y = img_reader(source_train[:nb_train])
     tar_train_x, tar_train_y = img_reader(target_train[:nb_train])
-    
+
     nb_val = min(source_val.shape[0], target_val.shape[0])
     src_val_x, src_val_y = img_reader(source_val[:nb_val])
     tar_val_x, tar_val_y = img_reader(target_val[:nb_val])
@@ -421,8 +420,8 @@ def coral_train():
 
     # Run the training
     trainer.run()
-    
-    
+
+
 if __name__ == '__main__':
     # results = batch_train()
     # _with = pd.DataFrame(results[0],
@@ -439,4 +438,4 @@ if __name__ == '__main__':
     # plt.xlabel("Number of EPOCHS")
     # plt.ylabel("Accuracy")
     # plt.show()
-    coral_train()
+    coral_train(0)
