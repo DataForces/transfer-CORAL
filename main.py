@@ -396,6 +396,9 @@ def coral_train(gpu):
             extensions.PlotReport(['main/cls_loss_s', 'validation/main/cls_loss_s'],
                                   'epoch', file_name='cls_loss_of_source.png'))
         trainer.extend(
+            extensions.PlotReport(['main/coral_loss', 'main/cls_loss_s'],
+                                  'epoch', file_name='training loss.png'))
+        trainer.extend(
             extensions.PlotReport(['main/cls_loss_t', 'validation/main/cls_loss_t'],
                                   'epoch', file_name='cls_loss_of_target.png'))
         trainer.extend(
@@ -412,8 +415,9 @@ def coral_train(gpu):
     # Entries other than 'epoch' are reported by the Classifier link, called by
     # either the updater or the evaluator.
     trainer.extend(extensions.PrintReport(
-        ['epoch', 'main/loss', 'main/cls_loss_s', 'main/cls_loss_t', 'main/coral_loss', 'validation/main/loss',
-         'main/accuracy', 'validation/main/accuracy']))
+        ['epoch', 'main/loss', 'main/coral_loss',
+         'main/src_acc', 'main/tar_acc',
+         'validation/main/src_acc','validation/main/tar_acc']))
 
     # Print a progress bar to stdout
     trainer.extend(extensions.ProgressBar())
