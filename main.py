@@ -85,8 +85,8 @@ class Classifier(chainer.Chain):
         acc_s = F.accuracy(features_s, src_y)
         acc_t = F.accuracy(features_t, tar_y)
         loss = cls_loss_s + self.alpha * coral_loss
-        report({'loss': loss, 'cls_loss_s': cls_loss_s, 'cls_loss_t': cls_loss_t,
-                'coral_loss': coral_loss, 'src_acc': acc_s, 'tar_acc': acc_t}, self)
+        chainer.report({'loss': loss, 'cls_loss_s': cls_loss_s, 'cls_loss_t': cls_loss_t,
+                        'coral_loss': coral_loss, 'src_acc': acc_s, 'tar_acc': acc_t}, self)
         return loss
 
 
