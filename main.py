@@ -315,16 +315,12 @@ def batch_train():
     return results
 
 
-def coral_train(gpu):
-    batch_size = 32
-    epochs = 100
+def coral_train(gpu=0, has_coral=True, apha=1.0, epochs=100, batch_size=32):
     print('GPU: {}'.format(gpu))
     print('# Minibatch-size: {}'.format(batch_size))
     print('# epoch: {}'.format(epochs))
     print('')
     alexnet = Alex()
-    has_coral = True
-    alpha = 1.0
     used_pretrain = True
     nb_cls = 31
     if used_pretrain:
@@ -354,7 +350,8 @@ def coral_train(gpu):
     tar_train_idx = list(range(0, target_train.shape[0]))
     random.shuffle(tar_train_idx)
     target_train = target_train.iloc[tar_train_idx]
-
+    print("{} samples in Source, {} samples in Target.".format(
+        source_train.shape[0], target_train.shape[0]))
     nb_train = min(source_train.shape[0], target_train.shape[0])
     src_train_x, src_train_y = img_reader(source_train[:nb_train])
     tar_train_x, tar_train_y = img_reader(target_train[:nb_train])
@@ -363,8 +360,10 @@ def coral_train(gpu):
     src_val_x, src_val_y = img_reader(source_val[:nb_val])
     tar_val_x, tar_val_y = img_reader(target_val[:nb_val])
 
-    train_data = chainer.datasets.TupleDataset(src_train_x, src_train_y, tar_train_x, tar_train_y)
-    val_data = chainer.datasets.TupleDataset(src_val_x, src_val_y, tar_val_x, tar_val_y)
+    train_data = chainer.datasets.TupleDataset(
+        src_train_x, src_train_y, tar_train_x, tar_train_y)
+    val_data = chainer.datasets.TupleDataset(
+        src_val_x, src_val_y, tar_val_x, tar_val_y)
 
     train_iter = chainer.iterators.SerialIterator(
         train_data, batch_size, shuffle=True)
@@ -377,38 +376,35 @@ def coral_train(gpu):
     # Evaluate the model with the test dataset for each epoch
     trainer.extend(extensions.Evaluator(test_iter, model, device=gpu))
 
-    # Dump a computational graph from 'loss' variable at the first iteration
-    # The "main" refers to the target link of the "main" optimizer.
-    trainer.extend(extensions.dump_graph('main/loss'))
-
     # Write a log of evaluation statistics for each epoch
-    trainer.extend(extensions.LogReport(log_name='log.json'))
+    trainer.extend(extensions.LogReport(
+        log_name='log_has_coral.json' if has_coral else 'log_no_coral.json'))
 
     # Save two plot images to the result dir
     if extensions.PlotReport.available():
         trainer.extend(
             extensions.PlotReport(['main/loss', 'validation/main/loss'],
-                                  'epoch', file_name='loss.png'))
+                                  'epoch', file_name='total_loss_has_coral.png' if has_coral else 'total_loss_no_coral.png'))
         trainer.extend(
             extensions.PlotReport(['main/coral_loss', 'validation/main/coral_loss'],
-                                  'epoch', file_name='coral_loss.png'))
+                                  'epoch', file_name='coral_loss_has_coral.png' if has_coral else 'coral_loss_no_coral.png'))
         trainer.extend(
             extensions.PlotReport(['main/cls_loss_s', 'validation/main/cls_loss_s'],
-                                  'epoch', file_name='cls_loss_of_source.png'))
+                                  'epoch', file_name='cls_loss_of_source_has_coral.png' if has_coral else 'cls_loss_of_source_no_coral.png'))
         trainer.extend(
             extensions.PlotReport(['main/coral_loss', 'main/cls_loss_s'],
-                                  'epoch', file_name='training loss.png'))
+                                  'epoch', file_name='train_loss_has_coral.png' if has_coral else 'train_loss_no_coral.png'))
         trainer.extend(
             extensions.PlotReport(['main/cls_loss_t', 'validation/main/cls_loss_t'],
-                                  'epoch', file_name='cls_loss_of_target.png'))
+                                  'epoch', file_name='cls_loss_of_target_has_coral.png' if has_coral else 'cls_loss_of_target_no_coral.png'))
         trainer.extend(
             extensions.PlotReport(
                 ['main/src_acc', 'validation/main/src_acc'],
-                'epoch', file_name='src_acc.png'))
+                'epoch', file_name='src_acc_has_coral.png' if has_coral else 'src_acc_no_coral.png'))
         trainer.extend(
             extensions.PlotReport(
                 ['main/tar_acc', 'validation/main/tar_acc'],
-                'epoch', file_name='tar_acc.png'))
+                'epoch', file_name='tar_acc_has_coral.png' if has_coral else 'tar_acc_no_coral.png'))
     # Print selected entries of the log to stdout
     # Here "main" refers to the target link of the "main" optimizer again, and
     # "validation" refers to the default name of the Evaluator extension.
@@ -417,7 +413,7 @@ def coral_train(gpu):
     trainer.extend(extensions.PrintReport(
         ['epoch', 'main/loss', 'main/coral_loss',
          'main/src_acc', 'main/tar_acc',
-         'validation/main/src_acc','validation/main/tar_acc']))
+         'validation/main/src_acc', 'validation/main/tar_acc']))
 
     # Print a progress bar to stdout
     trainer.extend(extensions.ProgressBar())
@@ -442,4 +438,6 @@ if __name__ == '__main__':
     # plt.xlabel("Number of EPOCHS")
     # plt.ylabel("Accuracy")
     # plt.show()
+    # training with coral loss, alpha equal to 1
     coral_train(0)
+    coral_train(0, False)
