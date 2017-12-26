@@ -263,16 +263,16 @@ def batch_train():
 
 
 if __name__ == '__main__':
-    gpu = -1
+    gpu = 0
     batch_size = 32
-    epochs = 20
+    epochs = 100
     print('GPU: {}'.format(gpu))
     print('# Minibatch-size: {}'.format(batch_size))
-    print('# epoch: {}'.format(20))
+    print('# epoch: {}'.format(epochs))
     print('')
 
     alexnet = Alex()
-    used_pretrain = False
+    used_pretrain = True
     nb_cls = 31
     if used_pretrain:
         # load pretrain weights
@@ -331,7 +331,7 @@ if __name__ == '__main__':
     # either the updater or the evaluator.
     trainer.extend(extensions.PrintReport(
         ['epoch', 'main/loss', 'validation/main/loss',
-         'main/accuracy', 'validation/main/accuracy', 'elapsed_time']))
+         'main/accuracy', 'validation/main/accuracy']))
 
     # Print a progress bar to stdout
     trainer.extend(extensions.ProgressBar())
