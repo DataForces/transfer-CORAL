@@ -316,6 +316,7 @@ def batch_train():
 
 
 def coral_train(gpu=0, has_coral=True, alpha=1.0, epochs=50, batch_size=32):
+
     print('GPU: {}'.format(gpu))
     print('# Minibatch-size: {}'.format(batch_size))
     print('# epoch: {}'.format(epochs))
@@ -333,10 +334,18 @@ def coral_train(gpu=0, has_coral=True, alpha=1.0, epochs=50, batch_size=32):
     model = Classifier(alexnet, alpha, has_coral)
     if chainer.cuda.available:
         model.to_gpu()
-
+    # initial setting of original paper
+    LEARNING_RATE = 1e-4
+    WEIGHT_DECAY = 5e-4
+    MOMENTUM = 0.9
     # Setup an optimizer
-    optimizer = chainer.optimizers.Adam()
+    optimizer = chainer.optimizers.MomentumSGD(
+        lr=LEARNING_RATE, momentum=MOMENTUM)
     optimizer.setup(model)
+    optimizer.add_hook(chainer.optimizer.WeightDecay(WEIGHT_DECAY))
+    # change learning rate of fc8 layer
+    model.sharedNet.fc8.W.update_rule.hyperparam.lr = 10 * LEARNING_RATE
+    model.sharedNet.fc8.b.update_rule.hyperparam.lr = 10 * LEARNING_RATE
 
     source_train = load_dataset("dataset/office31/amazon/train")
     source_val = load_dataset("dataset/office31/amazon/val")
@@ -349,7 +358,7 @@ def coral_train(gpu=0, has_coral=True, alpha=1.0, epochs=50, batch_size=32):
     source_train = source_train.iloc[src_train_idx]
     tar_train_idx = list(range(0, target_train.shape[0]))
     random.shuffle(tar_train_idx)
-    target_train = target_train.iloc[tar_train_idx*4]
+    target_train = target_train.iloc[tar_train_idx * 4]
 
     nb_train = min(source_train.shape[0], target_train.shape[0])
     src_train_x, src_train_y = img_reader(source_train[:nb_train])
@@ -384,28 +393,9 @@ def coral_train(gpu=0, has_coral=True, alpha=1.0, epochs=50, batch_size=32):
     # Save two plot images to the result dir
     if extensions.PlotReport.available():
         trainer.extend(
-            extensions.PlotReport(['main/loss', 'validation/main/loss'],
-                                  'epoch', file_name='total_loss_has_coral.png' if has_coral else 'total_loss_no_coral.png'))
-        trainer.extend(
-            extensions.PlotReport(['main/coral_loss', 'validation/main/coral_loss'],
-                                  'epoch', file_name='coral_loss_has_coral.png' if has_coral else 'coral_loss_no_coral.png'))
-        trainer.extend(
-            extensions.PlotReport(['main/cls_loss_s', 'validation/main/cls_loss_s'],
-                                  'epoch', file_name='cls_loss_of_source_has_coral.png' if has_coral else 'cls_loss_of_source_no_coral.png'))
-        trainer.extend(
-            extensions.PlotReport(['main/coral_loss', 'main/cls_loss_s'],
-                                  'epoch', file_name='train_loss_has_coral.png' if has_coral else 'train_loss_no_coral.png'))
-        trainer.extend(
-            extensions.PlotReport(['main/cls_loss_t', 'validation/main/cls_loss_t'],
-                                  'epoch', file_name='cls_loss_of_target_has_coral.png' if has_coral else 'cls_loss_of_target_no_coral.png'))
-        trainer.extend(
             extensions.PlotReport(
-                ['main/src_acc', 'validation/main/src_acc'],
-                'epoch', file_name='src_acc_has_coral.png' if has_coral else 'src_acc_no_coral.png'))
-        trainer.extend(
-            extensions.PlotReport(
-                ['main/tar_acc', 'validation/main/tar_acc'],
-                'epoch', file_name='tar_acc_has_coral.png' if has_coral else 'tar_acc_no_coral.png'))
+                ['main/coral_loss', 'main/cls_loss_s', 'validation/main/coral_loss', 'validation/main/cls_loss_s'],
+                'epoch', file_name='train_loss_has_coral.png' if has_coral else 'train_loss_no_coral.png'))
         trainer.extend(
             extensions.PlotReport(
                 ['main/src_acc', 'validation/main/src_acc', 'main/tar_acc', 'validation/main/tar_acc'],
