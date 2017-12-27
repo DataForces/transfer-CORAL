@@ -315,7 +315,7 @@ def batch_train():
     return results
 
 
-def coral_train(gpu=0, has_coral=True, apha=1.0, epochs=100, batch_size=32):
+def coral_train(gpu=0, has_coral=True, alpha=1.0, epochs=50, batch_size=32):
     print('GPU: {}'.format(gpu))
     print('# Minibatch-size: {}'.format(batch_size))
     print('# epoch: {}'.format(epochs))
@@ -349,9 +349,8 @@ def coral_train(gpu=0, has_coral=True, apha=1.0, epochs=100, batch_size=32):
     source_train = source_train.iloc[src_train_idx]
     tar_train_idx = list(range(0, target_train.shape[0]))
     random.shuffle(tar_train_idx)
-    target_train = target_train.iloc[tar_train_idx]
-    print("{} samples in Source, {} samples in Target.".format(
-        source_train.shape[0], target_train.shape[0]))
+    target_train = target_train.iloc[tar_train_idx*4]
+
     nb_train = min(source_train.shape[0], target_train.shape[0])
     src_train_x, src_train_y = img_reader(source_train[:nb_train])
     tar_train_x, tar_train_y = img_reader(target_train[:nb_train])
@@ -360,6 +359,8 @@ def coral_train(gpu=0, has_coral=True, apha=1.0, epochs=100, batch_size=32):
     src_val_x, src_val_y = img_reader(source_val[:nb_val])
     tar_val_x, tar_val_y = img_reader(target_val[:nb_val])
 
+    print("{} samples for training, {} samples for validation.".format(
+        nb_train, nb_val))
     train_data = chainer.datasets.TupleDataset(
         src_train_x, src_train_y, tar_train_x, tar_train_y)
     val_data = chainer.datasets.TupleDataset(
@@ -405,6 +406,10 @@ def coral_train(gpu=0, has_coral=True, apha=1.0, epochs=100, batch_size=32):
             extensions.PlotReport(
                 ['main/tar_acc', 'validation/main/tar_acc'],
                 'epoch', file_name='tar_acc_has_coral.png' if has_coral else 'tar_acc_no_coral.png'))
+        trainer.extend(
+            extensions.PlotReport(
+                ['main/src_acc', 'validation/main/src_acc', 'main/tar_acc', 'validation/main/tar_acc'],
+                'epoch', file_name='accuracy_has_coral.png' if has_coral else 'accuracy_no_coral.png'))
     # Print selected entries of the log to stdout
     # Here "main" refers to the target link of the "main" optimizer again, and
     # "validation" refers to the default name of the Evaluator extension.
