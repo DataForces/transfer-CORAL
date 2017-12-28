@@ -315,7 +315,7 @@ def batch_train():
     return results
 
 
-def coral_train(gpu=0, has_coral=True, alpha=1.0, epochs=50, batch_size=32):
+def coral_train(gpu=0, has_coral=True, alpha=1.0, epochs=50, batch_size=128):
 
     print('GPU: {}'.format(gpu))
     print('# Minibatch-size: {}'.format(batch_size))
@@ -335,7 +335,7 @@ def coral_train(gpu=0, has_coral=True, alpha=1.0, epochs=50, batch_size=32):
     if chainer.cuda.available:
         model.to_gpu()
     # initial setting of original paper
-    LEARNING_RATE = 1e-4
+    LEARNING_RATE = 1e-3
     WEIGHT_DECAY = 5e-4
     MOMENTUM = 0.9
     # Setup an optimizer
@@ -358,7 +358,7 @@ def coral_train(gpu=0, has_coral=True, alpha=1.0, epochs=50, batch_size=32):
     source_train = source_train.iloc[src_train_idx]
     tar_train_idx = list(range(0, target_train.shape[0]))
     random.shuffle(tar_train_idx)
-    target_train = target_train.iloc[tar_train_idx * 4]
+    target_train = target_train.iloc[tar_train_idx * 3]
 
     nb_train = min(source_train.shape[0], target_train.shape[0])
     src_train_x, src_train_y = img_reader(source_train[:nb_train])
@@ -394,19 +394,20 @@ def coral_train(gpu=0, has_coral=True, alpha=1.0, epochs=50, batch_size=32):
     if extensions.PlotReport.available():
         trainer.extend(
             extensions.PlotReport(
-                ['main/coral_loss', 'main/cls_loss_s', 'validation/main/coral_loss', 'validation/main/cls_loss_s'],
-                'epoch', file_name='train_loss_has_coral.png' if has_coral else 'train_loss_no_coral.png'))
+                ['main/coral_loss', 'main/cls_loss_s'],
+                 'epoch', file_name='train_loss_has_coral.png' if has_coral else 'train_loss_no_coral.png'))
         trainer.extend(
             extensions.PlotReport(
                 ['main/src_acc', 'validation/main/src_acc', 'main/tar_acc', 'validation/main/tar_acc'],
-                'epoch', file_name='accuracy_has_coral.png' if has_coral else 'accuracy_no_coral.png'))
+                 'epoch', file_name='accuracy_has_coral.png' if has_coral else 'accuracy_no_coral.png'))
     # Print selected entries of the log to stdout
     # Here "main" refers to the target link of the "main" optimizer again, and
     # "validation" refers to the default name of the Evaluator extension.
     # Entries other than 'epoch' are reported by the Classifier link, called by
     # either the updater or the evaluator.
     trainer.extend(extensions.PrintReport(
-        ['epoch', 'main/loss', 'main/coral_loss',
+        ['epoch',
+         'main/cls_loss_s', 'main/coral_loss',
          'main/src_acc', 'main/tar_acc',
          'validation/main/src_acc', 'validation/main/tar_acc']))
 
@@ -434,5 +435,5 @@ if __name__ == '__main__':
     # plt.ylabel("Accuracy")
     # plt.show()
     # training with coral loss, alpha equal to 1
-    coral_train(0)
+    coral_train(0, True, 0.1)
     coral_train(0, False)
