@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 """
   @Author: cc
-  @CreateTime:   2017-12-19T12:01:04+09:00
+  @CreateTime:   2017-12-18T20:20:50+09:00
   @Email:  guangmingwu2010@gmail.com
   @Copyright: go-hiroaki
   @License: MIT
@@ -51,11 +51,7 @@ class Alex(chainer.Chain):
 
 
 if __name__ == "__main__":
-#    caffemodel = CaffeFunction("bvlc_alexnet.caffemodel")
-#    npz.save_npz("alexnet.npz", caffemodel, compression=False)
+    caffemodel = CaffeFunction("bvlc_alexnet.caffemodel")
+    npz.save_npz("alexnet.npz", caffemodel, compression=False)
     alexnet = Alex()
-    bf_conv1_b = np.copy(alexnet.conv1.b.data)
-    print(bf_conv1_b)
     npz.load_npz("alexnet.npz", alexnet)
-    af_conv1_b = alexnet.conv1.b.data
-    np.equal(bf_conv1_b, af_conv1_b)
