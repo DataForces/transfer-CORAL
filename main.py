@@ -142,7 +142,7 @@ def main():
     if chainer.cuda.available:
         model.to_gpu()
     # initial setting of original paper
-    LEARNING_RATE = 1e-4
+    LEARNING_RATE = 1e-3
     WEIGHT_DECAY = 5e-4
     MOMENTUM = 0.9
     # Setup an optimizer
@@ -211,7 +211,8 @@ def main():
 
     # print logs
     trainer.extend(extensions.PrintReport(
-        ['epoch', 'main/loss', 'main/coral_loss',
+        ['epoch',
+         'main/cls_loss_s', 'main/coral_loss',
          'main/src_acc', 'main/tar_acc',
          'validation/main/src_acc', 'validation/main/tar_acc']))
 
